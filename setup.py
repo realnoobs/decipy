@@ -9,7 +9,7 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 
-with open("README.md", "r") as fh:
+with open("README.md", "r", encoding='utf-8') as fh:
     long_description = fh.read()
 
 setup(
@@ -19,9 +19,9 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     maintainer='Rizki Sasri Dwitama',
-    maintainer_email='sasri.project@gmail.com',
+    maintainer_email='sasri.djproject@gmail.com',
     license="MIT",
-    url='https://github.com/sasriawesome/decipy',
+    url='https://github.com/justsasri/decipy',
     packages=[
         'decipy',
     ],

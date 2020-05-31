@@ -2,18 +2,18 @@
 Multi-Criteria Decision Making Methods library 
 
 ## Installation
-```
+```shell script
 $ pip install decipy
 ```
 or
-```
-$ pip install git+https://github.com/sasriawesome/decipy.git#egg=decipy
+```shell script
+$ pip install git+https://github.com/justsasri/decipy.git#egg=decipy
 ```
 
 ## MCDM Ranking
-```
-import os
+```python
 import numpy as np
+import pandas as pd
 from decipy import executors as exe
 
 # define matrix
@@ -63,23 +63,20 @@ print(topsis.dataframe)
 print("Vikor Ranks")
 print(vikor.dataframe)
 
-```
 
-## How to choose best MCDM Method ?
-```
+# How to choose best MCDM Method ?
 
 # Instantiate Rank Analizer
 analizer = exe.RankSimilarityAnalyzer()
 
 # Add MCDMs to anlizer
-analizer.add_executor(self.wsm)
-analizer.add_executor(self.wpm)
-analizer.add_executor(self.moora)
+analizer.add_executor(wsm)
+analizer.add_executor(topsis)
+analizer.add_executor(vikor)
 
 # run analizer
 results = analizer.analyze()
 print(results)
-
 ```
 
 ## references
