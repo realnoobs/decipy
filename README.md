@@ -81,3 +81,12 @@ results = analizer.analyze()
 print(results)
 
 ```
+
+## references
+- Triantaphyllou, E., Mann, S.H. 1989. "An Examination of The Effectiveness of Multi-dimensional Decision-making Methods: A Decision Making Paradox." Decision Support Systems (5(3)): 303–312.
+- Chakraborty, S., and C.H. Yeh. 2012. "Rank Similarity based MADM Method Selection." International Conference on Statistics in Science, Business and Engineering (ICSSBE2012)
+- Brauers, Willem K., and Edmundas K. Zavadskas. 2009. "Robustness of the multi‐objective MOORA method with a test for the facilities sector." Ukio Technologinisir Ekonominis (15:2): 352-375.
+- Hwang, C.L., and K. Yoon. 1981. "Multiple attribute decision making, methods and applications." Lecture Notes in Economics and Mathematical Systems(Springer-Verlag) 186
+- Yoon, K.P. and Hwang, C.L., “Multiple Attribute Decision Making: An Introduction”, SAGE publications, London, 1995.
+- ÇELEN, Aydın. 2014. "Comparative Analysis of Normalization Procedures in TOPSIS Method: With an Application to Turkish Deposit Banking Market." INFORMATICA 25 (2): 185–208
+- “Ranking”, http://en.wikipedia.org/wiki/Ranking
