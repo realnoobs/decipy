@@ -5,10 +5,6 @@ Multi-Criteria Decision Making Methods library
 ```shell script
 $ pip install decision-python
 ```
-or
-```shell script
-$ pip install git+https://github.com/justsasri/decipy.git#egg=decipy
-```
 
 ## MCDM Ranking
 ```python
