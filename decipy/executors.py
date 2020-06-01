@@ -22,12 +22,9 @@ class DataMatrix:
 
     @property
     def random(self):
-        cmin = self.min * 100
-        cmax = self.max * 100
-        alt = self.alts_count
-        x = np.zeros((len(cmin), alt))
-        for i in range(len(cmin)):
-            x[i] = np.random.randint(cmin[i], cmax[i], size=alt)
+        x = np.zeros((self.crits_count, self.alts_count))
+        for i in range(self.crits_count):
+            x[i] = np.random.randint(self.min[i], self.max[i], size=self.alts_count)
         df = pd.DataFrame(x.transpose(), index=self.alts, columns=self.crits)
         return df
 
@@ -379,7 +376,7 @@ class Vikor(MCDMBase):
 
 class RankSimilarityAnalyzer:
 
-    def __init__(self):
+    def __init__(self, rank_method='ordinal', rank_reverse=True):
         self.rho = None
         self.rsi = None
         self.rsr = None
@@ -388,6 +385,8 @@ class RankSimilarityAnalyzer:
         self.executors = []
         self.rate_matrix = []
         self.rank_matrix = []
+        self.rank_method = rank_method
+        self.rank_reverse = rank_reverse
 
     def reset(self, hard=False):
         self.rho = None
@@ -415,20 +414,11 @@ class RankSimilarityAnalyzer:
         self.rate_matrix.append(executor.dataframe['RATE'])
         self.rank_matrix.append(executor.dataframe['RANK'])
 
-    def analyze(self):
-        if len(self.executors) < 2:
-            raise IndexError("Please add at least 2 executors")
-        self.rho, self.pval = sps.spearmanr(self.rank_matrix, axis=1)
-        self.rsi = np.average(self.rho, axis=0)
-        self.rsr = sps.rankdata(self.rsi, method="max")
-        return self.get_results()
-
     def get_results(self):
-        result = pd.DataFrame(
-            np.array([self.rsi, self.rsr]).transpose(),
-            index=self.executor_labels,
-            columns=['RSI', 'RANK'])
-        return np.round(result, 2)
+        correlation_df = self.get_correlations()
+        correlation_df['RSI'] = np.round(self.rsi, 4)
+        correlation_df['RSR'] = np.round(self.rsr, 4)
+        return correlation_df
 
     def get_rates(self):
         rate_df = pd.DataFrame(
@@ -436,6 +426,12 @@ class RankSimilarityAnalyzer:
             index=self.alternatives_index,
             columns=self.executor_labels)
         return np.round(rate_df, 4)
+
+    def _get_rank(self, rsi):
+        rank = sps.rankdata(rsi, method=self.rank_method).astype(int)
+        if self.rank_reverse:
+            rank = sps.rankdata([-1 * i for i in rsi], method=self.rank_method).astype(int)
+        return rank
 
     def get_ranks(self):
         rank_df = pd.DataFrame(
@@ -445,10 +441,167 @@ class RankSimilarityAnalyzer:
         return np.round(rank_df, 4)
 
     def get_correlations(self):
-        correlation_df = pd.DataFrame(
+        correlations = pd.DataFrame(
             self.rho,
             index=self.executor_labels,
             columns=self.executor_labels)
-        correlation_df['RSI'] = np.round(self.rsi, 4)
-        correlation_df['RSR'] = sps.rankdata(self.rsi, method="ordinal")
-        return np.round(correlation_df, 4)
+        return np.round(correlations, 4)
+
+    def analyze(self):
+        if len(self.executors) < 2:
+            raise IndexError("Please add at least 2 executors")
+        self.rho, self.pval = sps.spearmanr(self.rank_matrix, axis=1)
+        self.rsi = np.average(self.rho, axis=0)
+        self.rsr = self._get_rank(self.rsi)
+        return self.get_results()
+
+
+class RankSimulator:
+    analizer_class = RankSimilarityAnalyzer
+
+    def __init__(self,
+                 matrix,
+                 beneficial,
+                 weights,
+                 executor_classes,
+                 events=1000,
+                 trials=100,
+                 rank_reverse=True,
+                 rank_method='ordinal'):
+
+        # Validation
+        if not isinstance(matrix, DataMatrix):
+            raise TypeError("'data' argument should be Decipy DataMatrix instance")
+        if not isinstance(beneficial, (list, tuple)):
+            raise TypeError("'beneficial' argument should be List or Tuple instance")
+        if matrix.crits_count != len(beneficial):
+            msg = "'beneficial' length does not match beneficial %s columns %s"
+            raise ValueError(msg % (matrix.alts_count, len(beneficial)))
+        if not isinstance(weights, (list, tuple)):
+            raise TypeError("'weights' argument should be List or Tuple instance")
+
+        if matrix.crits_count != len(weights):
+            msg = "'weights' length does not match weights %s columns %s"
+            raise ValueError(msg % (matrix.crits_count, len(weights)))
+
+        if not isinstance(executor_classes, (list, tuple)):
+            raise TypeError("'executor_classes' argument should be List or Tuple instance")
+        if len(executor_classes) < 2:
+            raise TypeError("'executor_classes' need 2 or more items")
+        for executor in executor_classes:
+            if not issubclass(executor, MCDMBase):
+                raise TypeError("'%s' is should be subclass of MCDMBase" % executor.__name__)
+
+        self.executors = []
+        self.analizer = None
+        self.trials = trials
+        self.events = events
+        self.matrix = matrix
+        self.beneficial = beneficial
+        self.weights = weights
+        self.executor_classes = executor_classes
+        self.executor_labels = [e.__name__ for e in self.executor_classes]
+        self.rank_reverse = rank_reverse
+        self.rank_method = rank_method
+        self.executor_count = len(self.executor_classes)
+
+        self.event_indexes = None
+        self.event_ranks = None
+        self.top_ranks = None
+        self.top_ranks_all = None
+        self.top_ranks_probability = None
+        self.global_similarity_index = None
+        self.top_similarity_index = None
+
+    def get_executors(self):
+        self.executors = []
+        for exec_class in self.executor_classes:
+            self.executors.append(
+                exec_class(
+                    data=self.matrix.random,
+                    beneficial=self.beneficial,
+                    weights=self.weights,
+                    rank_reverse=self.rank_reverse,
+                    rank_method=self.rank_method
+                )
+            )
+        return self.executors
+
+    def get_steps(self):
+        steps = self.events / self.trials
+        return [(s * self.trials) for s in range(1, int(steps) + 1)]
+
+    def run_analizer(self):
+        executors = self.get_executors()
+        self.analizer = self.analizer_class()
+        for executor in executors:
+            self.analizer.add_executor(executor)
+        self.analizer.analyze()
+        return self.analizer
+
+    def run(self):
+        steps = self.get_steps()
+        self.event_indexes = np.zeros((np.max(steps), self.executor_count))
+        self.event_ranks = np.zeros((np.max(steps), self.executor_count))
+
+        self.top_ranks = np.zeros((len(steps), self.executor_count))
+        self.top_ranks_probability = np.zeros((len(steps), self.executor_count))
+        self.global_similarity_index = np.zeros((len(steps), self.executor_count))
+        self.top_similarity_index = np.zeros((len(steps), self.executor_count))
+
+        for trial in range(len(steps)):
+            if trial == 0:
+                prev_event = 0
+                current_event = steps[trial]
+            else:
+                prev_event = steps[trial - 1]
+                current_event = steps[trial] - steps[trial - 1]
+
+            for event in range(current_event):
+                analizer = self.run_analizer()
+                self.event_indexes[event + prev_event] = analizer.get_results()['RSI']
+                self.event_ranks[event + prev_event] = analizer.get_results()['RSR']
+
+            self.top_ranks_all = np.count_nonzero(self.event_ranks[:steps[trial]] == self.executor_count, axis=0)
+            self.top_ranks[trial] = self.top_ranks_all
+            self.top_ranks_probability[trial] = self.top_ranks_all / steps[trial]
+            self.global_similarity_index[trial] = np.average(self.event_ranks[:steps[trial]], axis=0)
+            self.top_similarity_index[trial] = np.sum(self.event_ranks[:steps[trial]], axis=0)
+        return 'Simulation complete ...'
+
+    def get_event_ranks(self):
+        return pd.DataFrame(np.array(self.event_ranks).transpose(), index=self.executor_labels)
+
+    def get_top_ranks(self):
+        return pd.DataFrame(
+            np.array(self.top_ranks, dtype="int").transpose(),
+            index=self.executor_labels,
+            columns=self.get_steps()
+        )
+
+    def get_top_rank_probabilities(self):
+        return pd.DataFrame(
+            np.array(self.top_ranks_probability).transpose(),
+            index=self.executor_labels,
+            columns=self.get_steps()
+        )
+
+    def get_event_index(self):
+        return pd.DataFrame(
+            np.array(self.event_indexes).transpose(),
+            index=self.executor_labels
+        )
+
+    def get_global_similarity_index(self):
+        return pd.DataFrame(
+            np.array(self.global_similarity_index).transpose(),
+            index=self.executor_labels,
+            columns=self.get_steps()
+        )
+
+    def get_top_similarity_index(self):
+        return pd.DataFrame(
+            np.array(self.top_similarity_index).transpose(),
+            index=self.executor_labels,
+            columns=self.get_steps()
+        )
