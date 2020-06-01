@@ -22,7 +22,7 @@
 A collection of Multi Criteria Decision Making (MCDM) functions
 for python.  The function names appear below.
 
-Disclaimers :  The function list is obviously incomplete and, worse, the
+Disclaimers :  This modu is obviously incomplete and, worse, the
 functions are not optimized.  All functions have been tested (some more
 so than others), but they are far from bulletproof.  Thus, as with any
 free software, no warranty or guarantee is expressed or implied.

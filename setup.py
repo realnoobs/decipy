@@ -13,7 +13,7 @@ with open("README.md", "r", encoding='utf-8') as fh:
     long_description = fh.read()
 
 setup(
-    name='decipy',
+    name='decision-python',
     version=__version__,
     description='Multi criteria decision making with python',
     long_description=long_description,
@@ -24,6 +24,8 @@ setup(
     url='https://github.com/justsasri/decipy',
     packages=[
         'decipy',
+        'decipy.utils',
+        'decipy.dataset',
     ],
     include_package_data=True,
     install_requires=[

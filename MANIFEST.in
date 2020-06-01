@@ -2,4 +2,4 @@ include README.md
 include LICENSE
 include MANIFEST.in
 include AUTHORS
-graft django_trumbo
+graft decipy

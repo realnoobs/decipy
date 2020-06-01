@@ -3,7 +3,7 @@ Multi-Criteria Decision Making Methods library
 
 ## Installation
 ```shell script
-$ pip install decipy
+$ pip install decision-python
 ```
 or
 ```shell script
