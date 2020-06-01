@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-import decipy.executors as exe
+from decipy.executors import *
 
 matrix = np.array([
     [4, 3, 2, 4],
@@ -24,19 +24,20 @@ class RankSimilarityApp:
             'rank_reverse': True,
             'rank_method': "ordinal"
         }
-        self.wsm = exe.WSM(**kwargs)
-        self.wpm = exe.WPM(**kwargs)
-        self.moora = exe.Moora(**kwargs)
+        self.wsm = WSM(**kwargs)
+        self.wpm = WPM(**kwargs)
+        self.moora = Moora(**kwargs)
 
     def analysis(self):
-        analizer = exe.RankSimilarityAnalyzer()
+        analizer = RankSimilarityAnalyzer()
         analizer.add_executor(self.wsm)
         analizer.add_executor(self.wpm)
         analizer.add_executor(self.moora)
         analizer.analyze()
-        return analizer.get_ranks_dataframe()
+        return analizer
 
 
 if __name__ == '__main__':
     app = RankSimilarityApp()
-    app.analysis()
+    analizer = app.analysis()
+    print(analizer.get_results())

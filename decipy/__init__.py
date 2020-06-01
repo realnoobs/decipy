@@ -31,7 +31,7 @@ free software, no warranty or guarantee is expressed or implied.
 
 from .utils.version import get_version
 
-VERSION = (0, 0, 1, 'final', 1)
+VERSION = (0, 0, 2, 'final', 1)
 
 __author__ = "Rizki Sasri Dwitama <sasri.project@gmail.org>"
 __version__ = get_version(VERSION)

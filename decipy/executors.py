@@ -382,6 +382,7 @@ class RankSimilarityAnalyzer:
     def __init__(self):
         self.rho = None
         self.rsi = None
+        self.rsr = None
         self.pval = None
         self.results = {}
         self.executors = []
@@ -419,23 +420,31 @@ class RankSimilarityAnalyzer:
             raise IndexError("Please add at least 2 executors")
         self.rho, self.pval = sps.spearmanr(self.rank_matrix, axis=1)
         self.rsi = np.average(self.rho, axis=0)
-        return self.rsi
+        self.rsr = sps.rankdata(self.rsi, method="max")
+        return self.get_results()
 
-    def get_rates_dataframe(self):
+    def get_results(self):
+        result = pd.DataFrame(
+            np.array([self.rsi, self.rsr]).transpose(),
+            index=self.executor_labels,
+            columns=['RSI', 'RANK'])
+        return np.round(result, 2)
+
+    def get_rates(self):
         rate_df = pd.DataFrame(
             np.array(self.rate_matrix).transpose(),
             index=self.alternatives_index,
             columns=self.executor_labels)
         return np.round(rate_df, 4)
 
-    def get_ranks_dataframe(self):
+    def get_ranks(self):
         rank_df = pd.DataFrame(
             np.array(self.rank_matrix).transpose(),
             index=self.alternatives_index,
             columns=self.executor_labels)
         return np.round(rank_df, 4)
 
-    def get_correlations_dataframe(self):
+    def get_correlations(self):
         correlation_df = pd.DataFrame(
             self.rho,
             index=self.executor_labels,
