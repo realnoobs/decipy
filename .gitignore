@@ -132,6 +132,7 @@ dmypy.json
 # IDE
 .idea
 .vscode
+.ipynb_checkpoints/
 .notebooks/
 notebooks/
 node_modules/
