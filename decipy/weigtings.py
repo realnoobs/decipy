@@ -39,5 +39,5 @@ class MinMax(Weight):
         for i in range(len(self.weights)):
             nomin = np.max(self.rij[i]) - self.rij[i]
             denom = np.max(self.rij[i]) - np.min(self.rij[i])
-            self.vij[i] = self.weights[i] * (nomin / denom)
+            self.vij[i] = 0 if denom == 0 else self.weights[i] * (nomin / denom)
         return self.vij
