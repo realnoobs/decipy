@@ -76,11 +76,13 @@ class Vector(NormalizerBase):
             if self.beneficial[c]:
                 # Benefit Criteria
                 denom = np.power(self.xij[c], 2)
-                self.rij[c] = self.xij[c] / np.sqrt(np.sum(denom))
+                sumd = np.sum(denom)
+                self.rij[c] = 0 if sumd == 0 else self.xij[c] / np.sqrt(sumd)
             else:
                 # Cost Criteria
                 denom = 1 / (np.power(self.xij[c], 2))
-                self.rij[c] = (1 / self.xij[c]) / np.sqrt(np.sum(denom))
+                sumd = np.sum(denom)
+                self.rij[c] = 0 if sumd == 0 else (1 / self.xij[c]) / np.sqrt(sumd)
         return self.rij.transpose()
 
 
@@ -127,12 +129,12 @@ class MinMax(NormalizerBase):
                 # Benefit Criteria
                 nomin = self.xij[c] - np.min(self.xij[c])
                 denom = np.max(self.xij[c]) - np.min(self.xij[c])
-                self.rij[c] = (nomin / denom)
+                self.rij[c] = 0 if denom == 0 else (nomin / denom)
             else:
                 # Cost Criteria
                 nomin = (np.max(self.xij[c]) - self.xij[c])
                 denom = (np.max(self.xij[c]) - np.min(self.xij[c]))
-                self.rij[c] = (nomin / denom)
+                self.rij[c] = 0 if denom == 0 else (nomin / denom)
         return self.rij.transpose()
 
 
